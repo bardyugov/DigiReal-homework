@@ -1,10 +1,4 @@
-import {
-   BadRequestException,
-   Body,
-   Controller,
-   NotFoundException,
-   Post
-} from '@nestjs/common'
+import { BadRequestException, Body, Controller, Post } from '@nestjs/common'
 import { DataSource } from 'typeorm'
 import { CreatePaymentReq, CreatePaymentRes } from './dto'
 import { UserEntity } from '../../entities/user.entity'
@@ -12,6 +6,7 @@ import {
    TransactionAction,
    TransactionEntity
 } from '../../entities/transaction.entity'
+import { InternalServerErrorException } from '@nestjs/common/exceptions/internal-server-error.exception'
 
 @Controller('/payment')
 export class PaymentHandler {
@@ -28,7 +23,9 @@ export class PaymentHandler {
             .getOne()
 
          if (!user) {
-            throw new NotFoundException(`User with id ${dto.userId} not found`)
+            throw new BadRequestException(
+               `User with id ${dto.userId} not found`
+            )
          }
 
          if (user.balance < dto.amount) {
@@ -59,7 +56,7 @@ export class PaymentHandler {
             .getRawOne<{ withdraws: string; replenishments: string }>()
 
          if (!query) {
-            return
+            throw new InternalServerErrorException('Invalid query')
          }
 
          const updatedBalance = Math.abs(
